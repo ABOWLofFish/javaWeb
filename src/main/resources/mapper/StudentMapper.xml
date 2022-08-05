@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="javaWeb.test.mapper.StudentMapper">
+    <!--UserBean get_login_info(String user_id, String password);-->
+    <select id="get_login_info" resultType="javaWeb.test.bean.UserBean">
+        select *
+        from student
+        where id = #{user_id}
+          and password = #{password}
+    </select>
+    <!--boolean insert_user(String user_id, String user_name, String password, String tel, String e_mail);-->
+    <insert id="insert_user">
+        insert into student
+        values (#{user_id}, #{user_name}, #{password}, #{tel}, #{e_mail})
+    </insert>
+    <!--UserBean display_info(String user_id);-->
+    <resultMap id="displayInfoMap" type="javaWeb.test.bean.UserBean">
+        <id property="user_id" column="id"/>
+        <result property="user_name" column="name"/>
+        <result property="telephone" column="phone"/>
+        <result property="email" column="email"/>
+    </resultMap>
+    <select id="display_info" resultMap="displayInfoMap">
+        select *
+        from student
+        where id = #{user_id}
+    </select>
+
+    <!--boolean update_info(String user_name, String tel, String e_mail);-->
+    <update id="update_info">
+        update student
+        set name=#{user_name},
+            phone=#{tel},
+            email=#{e_mail}
+        where id = #{user_id}
+    </update>
+
+    <!--zwr:管理员端：查看所有学生信息-->
+    <!--  List<UserBean> find_all() -->
+    <resultMap id="find_all_students" type="javaWeb.test.bean.UserBean">
+        <id property="user_id" column="id"/>
+        <result property="user_name" column="name"/>
+        <result property="telephone" column="phone"/>
+        <result property="email" column="email"/>
+    </resultMap>
+    <select id="find_all_students" resultMap="find_all_students">
+        select id, name, phone, email
+        from student;
+    </select>
+
+    <!--boolean update_user(String user_id, String user_name, String password,String tel, String e_mail);-->
+    <update id="update_user">
+        update student
+        set name=#{user_name},
+            phone=#{tel},
+            email=#{e_mail}
+        where id = #{user_id}
+    </update>
+
+    <!--boolean delete_user(String user_id);-->
+    <delete id="delete_user">
+        delete
+        from student
+        where id = #{user_id}
+    </delete>
+
+    <!--String get_Max_id();-->
+    <select id="get_Max_id" resultType="java.lang.String">
+        select max(id)
+        from student;
+    </select>
+
+    <!--zwr:查看项目活动-->
+    <!--List<ProjectBean> get_projects();-->
+    <resultMap id="get_projects" type="ProjectBean">
+        <id property="project_id" column="id"/>
+        <result property="project_name" column="project_name"/>
+        <result property="project_start" column="start_date"/>
+        <result property="project_end" column="end_date"/>
+    </resultMap>
+    <select id="get_projects" resultMap="get_projects">
+        select id, project_name, start_date, end_date
+        from project
+    </select>
+
+    <!--zwr:获取该学生在该活动内所在团队（好像有重复）-->
+    <!--List<Review> get_team_in_project(String user_id, String project_id);-->
+    <select id="get_team_in_project" resultType="javaWeb.test.bean.TeamBean">
+        select *
+        from team
+        where project_id = #{project_id}
+          and (captain_id = #{user_id} or member1_id = #{user_id} or member2_id = #{user_id})
+    </select>
+
+    <!--zwr:获取该学生所在团队提交报告-->
+    <!--List<Review> get_report_in_team(String team_id);-->
+    <select id="get_report_in_team" resultType="java.lang.String">
+        select report_content
+        from team
+        where team_id = #{team_id}
+    </select>
+
+    <!--zwr:获取该学生在该活动内所在团队信息（好像有重复）-->
+    <select id="get_teamInfo" resultType="javaWeb.test.bean.TeamBean">
+        select team_id,
+               team_name,
+               captain_id,
+               member1_id,
+               member2_id,
+               student.name captain_name,
+               student.name member1_name,
+               student.name member2_name,
+               teacher_id,
+               teacher.name teacher_name
+        from team,
+             student,
+             teacher
+        where (captain_id = #{user_id} or member1_id = #{user_id} or member2_id = #{user_id})
+          and project_id = #{project_id}
+    </select>
+
+    <!--zwr:管理员端：根据条件筛选学生信息-->
+    <!--List<UserBean> filter_user(String user_id, String user_name, String tel, String e_mail);-->
+    <resultMap id="filter_students" type="UserBean">
+        <id property="user_id" column="id"/>
+        <result property="user_name" column="name"/>
+        <result property="telephone" column="phone"/>
+        <result property="email" column="email"/>
+    </resultMap>
+    <select id="filter_user" resultMap="filter_students">
+        select id,name,email,phone from student
+        where 1 = 1
+        <if test="user_id != null and user_id != ''">
+            and id= #{user_id}
+        </if>
+
+        <if test="e_mail != null and e_mail != ''">
+            and email=#{e_mail}
+            </if>
+        <if test="tel != null and tel != ''">
+            and phone=#{tel}
+        </if>
+        <if test="user_name != null and user_name != ''">
+            and name = #{user_name}
+        </if>
+    </select>
+
+    <!--zwr:查看学生的项目状态-->
+    <!--List <ReportBean> get_reports(String user_id);-->
+    <resultMap id="get_reports" type="javaWeb.test.bean.ReportBean">
+        <id property="project_id" column="id"/>
+        <result property="project_name" column="project_name"/>
+        <result property="team_name" column="team_name"/>
+        <result property="teacher_name" column="teacher_id"/>
+    </resultMap>
+    <select id="get_reports" resultMap="get_reports">
+        select project.id, project_name, report_content, team_name, teacher_id
+        from team
+                 left join project on project.id = team.project_id
+        where captain_id = #{user_id}
+           or member1_id = #{user_id}
+           or member2_id = #{user_id}
+    </select>
+
+    <!--zwr:查看学生该项目中收到的所有评审内容-->
+    <!--List<Review> get_reviews(String user_id, String project_id);-->
+    <select id="get_reviews" resultType="javaWeb.test.bean.Review">
+        select teacher_id, review_content, grade
+        from review_info
+        where project_id = #{project_id}
+          and team_id in (select team_id
+                          from team
+                          where captain_id = #{user_id} or member1_id = #{user_id} or member2_id = #{user_id})
+    </select>
+
+    <!--zwr:查看学生在项目中所在团队信息-->
+    <!--TeamBean display_teamInfo(String user_id, String project_id)-->
+    <select id="display_teamInfo" resultType="javaWeb.test.bean.TeamBean">
+        select team_id,
+               team_name,
+               captain_id,
+               member1_id,
+               member2_id,
+               x.name       captain_name,
+               y.name       member1_name,
+               z.name       member2_name,
+               teacher_id,
+               teacher.name teacher_name
+        from team,
+             student x,
+             student y,
+             student z,
+             teacher
+        where (captain_id = #{user_id} or member1_id = #{user_id} or member2_id = #{user_id})
+          and project_id = #{project_id}
+          and x.id = team.captain_id
+          and y.id = member1_id
+          and z.id = member2_id
+          and teacher_id = teacher.id
+    </select>
+
+    <!--zwr:查看团队报告-->
+    <!--ReportBean get_report_info(String project_id,String team_id);-->
+    <select id="get_report_info" resultType="javaWeb.test.bean.ReportBean">
+        select report_content
+        from team
+        where team_id = #{team_id}
+          and project_id = #{project_id}
+    </select>
+
+    <!---->
+    <!--Review find_review(String project_id , String user_id);-->
+    <select id="find_review" resultType="Review">
+        select review_content
+        from review_info
+                 left join team on review_info.project_id = team.project_id and review_info.team_id = team.team_id
+        where review_info.project_id = #{project_id}
+          and (captain_id = #{user_id} or member1_id = #{user_id} or member2_id = #{user_id})
+    </select>
+
+   <!-- List<UserBean> find_students(String captain_id, String member1_id, String member2_id);-->
+    <select id="find_students" resultType="javaWeb.test.bean.UserBean">
+        select * from student where id=#{captain_id} or id=#{member1_id} or id=#{member2_id}
+    </select>
+</mapper>

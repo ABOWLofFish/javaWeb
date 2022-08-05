@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="javaWeb.test.mapper.TeamMapper">
+    <!--boolean register_team(
+            String project_id,
+            String team_name,
+            String captain_id,
+            String member1_id,
+            String member2_id,
+            String teacher_name
+    );-->
+    <insert id="register_team">
+        insert into team values (#{project_id},#{team_id},#{team_name},#{captain_id},#{member1_id},#{member2_id}, #{teacher_id}, null);
+    </insert>
+
+    <!--boolean submit_report(String team_id, String project_id,String report_content);-->
+    <update id="submit_report">
+        update team set report_content=#{report_content} where project_id=#{project_id} and team_id =#{team_id}
+    </update>
+
+    <!--  List<UserBean> check_register_info(String captain_id, String member1_id, String member2_id);-->
+    <select id="check_register_info" resultType="javaWeb.test.bean.UserBean">
+        select id from student where (id=#{captain_id} or id=#{member1_id} or id=#{member2_id})
+    </select>
+
+    <!--String get_Max_teamId();-->
+    <select id="get_Max_teamId" resultType="java.lang.String">
+        select max(team_id) from team;
+    </select>
+
+
+</mapper>

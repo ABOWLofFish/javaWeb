@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="javaWeb.test.mapper.TeacherMapper">
+    <!--UserBean get_login_info(String user_id, String password);-->
+    <select id="get_login_info" resultType="javaWeb.test.bean.UserBean">
+        select * from teacher where id=#{user_id}
+    </select>
+
+    <!--boolean insert_user(String user_id, String user_name, String password, String tel, String e_mail);-->
+    <insert id="insert_user">
+        insert into teacher values(#{user_id},#{user_name},#{password},#{tel},#{e_mail})
+    </insert>
+
+    <!--UserBean display_info(String user_id);-->
+    <resultMap id="displayInfoMap" type="javaWeb.test.bean.UserBean">
+        <id property="user_id" column="id"/>
+        <result property="user_name" column="name"/>
+        <result property="telephone" column="phone"/>
+        <result property="email" column="email"/>
+    </resultMap>
+    <select id="display_info" resultMap="displayInfoMap">
+        select * from teacher where id=#{user_id}
+    </select>
+
+    <!--boolean update_info(String user_id, String user_name, String tel, String e_mail);-->
+    <update id="update_info">
+        update teacher set name=#{user_name},phone=#{tel},email=#{e_mail} where id=#{user_id}
+    </update>
+
+    <!--Review display_review(String user_id,String project_id,team_id);-->
+    <select id="display_review" resultType="javaWeb.test.bean.Review">
+        select review_content,grade from review_info where project_id = #{project_id} and team_id=#{team_id} and teacher_id=#{user_id}
+    </select>
+
+    <!--boolean update_user(String user_id, String user_name, String password,String tel, String e_mail);-->
+    <update id="update_user">
+        update teacher set name=#{user_name},phone=#{tel},email=#{e_mail} where id=#{user_id}
+    </update>
+
+    <!--boolean delete_user(String user_id);-->
+    <delete id="delete_user">
+        delete from teacher where id=#{user_id}
+    </delete>
+
+    <!--String get_Max_id();-->
+    <select id="get_Max_id" resultType="java.lang.String">
+        select max(id) from teacher
+    </select>
+
+    <!--zwr:管理员端：根据条件筛选老师信息-->
+    <!--List<UserBean> filter_user(String user_id, String user_name, String tel, String e_mail);-->
+    <resultMap id="filter_teachers" type="UserBean">
+        <id property="user_id" column="id"/>
+        <result property="user_name" column="name"/>
+        <result property="telephone" column="phone"/>
+        <result property="email" column="email"/>
+    </resultMap>
+    <select id="filter_user" resultMap="filter_teachers">
+        select id,name,email,phone from teacher
+        where 1 = 1
+        <if test="user_id != null and user_id != ''">
+            and id= #{user_id}
+        </if>
+        <if test="user_name != null and user_name != ''">
+            and name = #{user_name}
+        </if>
+        <if test="e_mail != null and e_mail != ''">
+            and email=#{e_mail}
+        </if>
+        <if test="tel != null and tel != ''">
+            and phone=#{tel}
+        </if>
+    </select>
+
+    <!--zwr：管理员端：查找所有老师信息-->
+    <!--  List<UserBean> find_all() -->
+    <resultMap id="find_all_teachers" type="javaWeb.test.bean.UserBean">
+        <id property="user_id" column="id"/>
+        <result property="user_name" column="name"/>
+        <result property="telephone" column="phone"/>
+        <result property="email" column="email"/>
+    </resultMap>
+    <select id="find_all_teachers" resultMap="find_all_teachers">
+        select id, name, phone, email from teacher;
+    </select>
+
+    <!--zwr:显示所有评审活动-->
+    <!--List<ReviewBean> display_reviewsBean();-->
+    <resultMap id="display_reviewsBean" type="ReviewBean">
+        <id property="project_id" column="project_id"/>
+        <result property="review_name" column="review_name"/>
+        <result property="review_start" column="start_date"/>
+        <result property="review_end" column="end_date"/>
+    </resultMap>
+    <select id="display_reviewsBean" resultMap="display_reviewsBean">
+        select project_id, review_name, start_date, end_date from review;
+    </select>
+
+    <!--zwr：查找待被该老师评审的团队-->
+    <!--List<TeamBean> display_teams(String user_id, String project_id)-->
+    <resultMap id="display_teams_to_review" type="TeamBean">
+        <id property="team_id" column="team_id"/>
+        <result property="team_name" column="team_name"/>
+        <result property="captain_name" column="name"/>
+        <result property="captain_id" column="captain_id"/>
+        <result property="teacher_id" column="teacher_id"/>
+    </resultMap>
+    <select id="display_teams" resultMap="display_teams_to_review">
+        select team_id, team_name, captain_id,  s.name ,teacher_id from team join student s on team.captain_id = s.id
+        where project_id = #{project_id} and report_content is not null and team_id not in(
+            select team_id from review_info
+            where review_info.teacher_id = #{user_id}
+        )
+    </select>
+
+    <!--zwr：查找已被该老师评审的团队-->
+    <!--List<TeamBean> display_teams(String user_id, String project_id)-->
+    <resultMap id="display_teams_be_reviewed" type="TeamBean">
+        <id property="team_id" column="team_id"/>
+        <result property="team_name" column="team_name"/>
+        <result property="captain_name" column="name"/>
+        <result property="captain_id" column="captain_id"/>
+        <result property="teacher_id" column="teacher_id"/>
+    </resultMap>
+    <select id="display_teams_be_reviewed" resultMap="display_teams_be_reviewed">
+        select team_id, team_name, captain_id,  s.name ,teacher_id from team join student s on team.captain_id = s.id
+        where project_id = #{project_id} and team_id in(
+            select team_id from review_info
+            where review_info.teacher_id like #{user_id}
+        )
+    </select>
+
+    <!--zwr:对该团队进行评审-->
+    <!--boolean make_review(String project_id, String user_id, String team_id, String review_content, Integer review_level);-->
+    <insert id="make_review">
+        insert into review_info values(#{project_id},#{team_id},#{user_id},#{review_content},#{review_level})
+    </insert>
+
+    <!--ReportBean display_report(String team_id)-->
+    <select id="display_report" resultType="javaWeb.test.bean.ReportBean">
+        select report_content from team where team_id = #{team_id}
+    </select>
+
+    <!-- //验证导师身份
+    boolean check_teacher_info(String project_id,String user_name);-->
+    <resultMap id="check_teacher_info" type="javaWeb.test.bean.UserBean">
+        <result property="user_id" column="teacher_id"/>
+        <result property="user_name" column="name"/>
+    </resultMap>
+    <select id="check_teacher_info" resultMap="check_teacher_info">
+        select name,teacher_id from review_teacher left join teacher on teacher_id=teacher.id
+                    where project_id=#{project_id} and name = #{user_name}
+    </select>
+
+
+</mapper>

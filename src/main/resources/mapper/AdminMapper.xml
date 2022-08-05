@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="javaWeb.test.mapper.AdminMapper">
+    <!--UserBean get_login_info( String user_id, String password);-->
+    <select id="get_login_info" resultType="javaWeb.test.bean.UserBean">
+        select * from manager where id=#{user_id} and password=#{password}
+    </select>
+
+    <!--UserBean display_info(String user_id);-->
+    <resultMap id="displayInfoMap" type="javaWeb.test.bean.UserBean">
+        <id property="user_id" column="id"/>
+        <result property="user_name" column="name"/>
+        <result property="telephone" column="phone"/>
+        <result property="email" column="email"/>
+    </resultMap>
+    <select id="display_info" resultMap="displayInfoMap">
+        select * from manager where id=#{user_id}
+    </select>
+
+    <!--boolean update_info(
+             String user_name,
+             String tel,
+             String e_mail
+    );-->
+    <update id="update_info">
+        update manager set name=#{user_name},phone=#{tel},email=#{e_mail} where id=#{user_id}
+    </update>
+
+    <!--boolean insert_user(
+             String user_id,
+             String user_name,
+             String tel,
+             String e_mail
+    );-->
+    <insert id="insert_user">
+        insert into manager values(#{user_id},#{user_name},#{password},#{tel},#{e_mail})
+    </insert>
+
+    <!--boolean add_teacher(
+             String user_id,
+             String user_name,
+             String tel,
+             String e_mail
+    );-->
+    <insert id="add_teacher">
+        insert into teacher values(#{user_id},#{user_name},#{tel},#{email})
+    </insert>
+
+    <!--boolean add_project(
+             String project_id,
+            String project_name,
+            Time project_start,
+            Time project_end,
+            String project_description
+    );-->
+    <insert id="add_project">
+        insert into project values(#{project_id},#{project_name},#{project_start},#{project_end},#{project_description})
+    </insert>
+
+    <!--boolean add_review(
+             String review_id,
+             String review_name,
+             Time review_start,
+             Time review_end,
+             String review_description
+    );-->
+    <insert id="add_review">
+        insert into review values(#{project_id},#{review_name},#{review_start},#{review_end},#{review_description})
+    </insert>
+
+    <!--String get_Max_id();-->
+    <select id="get_Max_id" resultType="java.lang.String">
+        select max(id) from manager;
+    </select>
+
+    <!--String get_Max_project_id();-->
+    <select id="get_Max_project_id" resultType="java.lang.String">
+        select max(id) from project;
+    </select>
+
+    <!--String get_Max_review_id();-->
+    <select id="get_Max_review_id" resultType="java.lang.String">
+        select max(project_id) from review;
+    </select>
+
+    <!--zwr:查看评审活动-->
+    <!--List<ReviewBean> display_reviews();-->
+    <resultMap id="display_reviewbeans_admin_end" type="ReviewBean">
+        <id property="project_id" column="project_id"/>
+        <result property="review_name" column="review_name"/>
+        <result property="review_start" column="start_date"/>
+        <result property="review_end" column="end_date"/>
+    </resultMap>
+    <select id="display_reviews" resultMap="display_reviewbeans_admin_end">
+        select project_id,review_name, start_date, end_date from review
+    </select>
+
+
+    <!--zwr:查看项目活动-->
+    <!--List<ProjectBean> display_projects();-->
+    <resultMap id="display_projects_admin_end" type="ProjectBean">
+        <id property="project_id" column="id"/>
+        <result property="project_name" column="project_name"/>
+        <result property="project_start" column="start_date"/>
+        <result property="project_end" column="end_date"/>
+    </resultMap>
+    <select id="display_projects" resultMap="display_projects_admin_end">
+        select id, project_name, start_date, end_date from project
+    </select>
+
+    <!--zwr:查看参加该项目活动/评审活动的团队-->
+    <!--List<Team> display_teams(String project_id);-->
+    <select id="display_teams" resultType="javaWeb.test.bean.TeamBean">
+        select team.team_id,team.team_name,project.project_name,team.captain_id,student.name captain_name,
+               team.member1_id,team.member2_id, team.teacher_id,team.report_content
+        from team,project,student
+        where team.project_id=#{project_id} and project.id=#{project_id}
+          and team.captain_id = student.id
+    </select>
+
+    <!--zwr:查看该团队的评审和打分-->
+    <!--List<Review> display_team_review(String team_id);-->
+    <select id="display_team_reviews" resultType="javaWeb.test.bean.Review">
+        select teacher_id,review_content,grade from review_info where team_id=#{team_id}
+    </select>
+
+    <!--zwr:查看该团队的报告-->
+    <!--ReportBean display_report(String project_id, String team_id);-->
+    <select id="display_report" resultType="javaWeb.test.bean.ReportBean">
+        select project_id,report_content,teacher.name as teacher_name
+        from team,teacher
+        where project_id=#{project_id} and team_id=#{team_id} and teacher.id=team.teacher_id
+    </select>
+    <!--boolean add_review_teacher(
+             String project_id,
+             String teacher_id,
+             String teacher_name
+    );-->
+    <insert id="add_review_teacher">
+        insert into review_teacher values(#{project_id},#{teacher_id})
+    </insert>
+    
+    <!-- boolean match_exist_project(String project_id);-->
+    <select id="match_exist_project" resultType="javaWeb.test.bean.ProjectBean">
+        select * from project where id = #{project_id}
+    </select>
+    
+
+</mapper>
